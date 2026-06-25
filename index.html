@@ -1,0 +1,1365 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { 
+  Trophy, 
+  TrendingUp, 
+  Percent, 
+  HelpCircle, 
+  ShieldAlert, 
+  Activity, 
+  Zap, 
+  MessageSquare, 
+  Send, 
+  Sparkles, 
+  RotateCcw, 
+  Users, 
+  LineChart, 
+  DollarSign, 
+  Award,
+  ChevronRight,
+  Info,
+  Sliders,
+  Calendar,
+  AlertTriangle,
+  Flame,
+  CheckCircle,
+  TrendingDown,
+  Key,
+  Database,
+  Cpu,
+  Globe,
+  Settings
+} from 'lucide-react';
+
+// --- INITIAL DATA & SEED STATES ---
+const LEAGUES = [
+  { id: 'epl', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League' },
+  { id: 'laliga', name: '🇪🇸 La Liga' },
+  { id: 'ucl', name: '🇪🇺 UEFA Champions League' },
+  { id: 'worldcup', name: '🏆 FIFA World Cup' }
+];
+
+const INITIAL_TEAMS = [
+  // --- PREMIER LEAGUE ---
+  { id: 'mci', leagueId: 'epl', name: 'Manchester City', elo: 1980, color: '#6CABDD', xg: 2.2, xga: 0.9, last5: [3, 3, 1, 3, 0], rank: 1, value: 1260, restDays: 6, injuries: 2, formRating: 88, shots: 16.2, shotsOnTarget: 6.1, cleanSheets: 14, goalsConceded: 0.8 },
+  { id: 'ars', leagueId: 'epl', name: 'Arsenal', elo: 1950, color: '#EF0107', xg: 2.0, xga: 0.8, last5: [3, 3, 3, 1, 3], rank: 2, value: 1120, restDays: 7, injuries: 1, formRating: 92, shots: 15.5, shotsOnTarget: 5.8, cleanSheets: 16, goalsConceded: 0.7 },
+  { id: 'liv', leagueId: 'epl', name: 'Liverpool', elo: 1942, color: '#C8102E', xg: 2.3, xga: 1.1, last5: [3, 1, 3, 3, 3], rank: 3, value: 920, restDays: 5, injuries: 3, formRating: 89, shots: 18.1, shotsOnTarget: 6.9, cleanSheets: 12, goalsConceded: 1.0 },
+  { id: 'che', leagueId: 'epl', name: 'Chelsea', elo: 1795, color: '#034694', xg: 1.6, xga: 1.4, last5: [1, 3, 0, 3, 1], rank: 8, value: 910, restDays: 6, injuries: 5, formRating: 68, shots: 13.8, shotsOnTarget: 4.8, cleanSheets: 8, goalsConceded: 1.35 },
+  { id: 'mun', leagueId: 'epl', name: 'Manchester United', elo: 1770, color: '#DA291C', xg: 1.4, xga: 1.5, last5: [0, 3, 1, 0, 3], rank: 9, value: 870, restDays: 5, injuries: 6, formRating: 60, shots: 12.9, shotsOnTarget: 4.3, cleanSheets: 7, goalsConceded: 1.5 },
+  { id: 'tot', leagueId: 'epl', name: 'Tottenham Hotspur', elo: 1810, color: '#132257', xg: 1.8, xga: 1.3, last5: [3, 0, 3, 1, 0], rank: 5, value: 780, restDays: 6, injuries: 3, formRating: 70, shots: 14.5, shotsOnTarget: 5.2, cleanSheets: 9, goalsConceded: 1.25 },
+  { id: 'avl', leagueId: 'epl', name: 'Aston Villa', elo: 1750, color: '#95BFE5', xg: 1.65, xga: 1.3, last5: [3, 1, 3, 3, 0], rank: 4, value: 650, restDays: 6, injuries: 2, formRating: 75, shots: 13.2, shotsOnTarget: 4.5, cleanSheets: 7, goalsConceded: 1.3 },
+  { id: 'new', leagueId: 'epl', name: 'Newcastle United', elo: 1765, color: '#241F20', xg: 1.7, xga: 1.2, last5: [1, 3, 0, 3, 3], rank: 6, value: 690, restDays: 6, injuries: 4, formRating: 73, shots: 14.1, shotsOnTarget: 5.0, cleanSheets: 9, goalsConceded: 1.2 },
+  { id: 'bha', leagueId: 'epl', name: 'Brighton & Hove Albion', elo: 1720, color: '#0057B8', xg: 1.55, xga: 1.4, last5: [3, 0, 1, 1, 0], rank: 10, value: 520, restDays: 5, injuries: 3, formRating: 65, shots: 13.5, shotsOnTarget: 4.7, cleanSheets: 6, goalsConceded: 1.4 },
+
+  // --- LA LIGA ---
+  { id: 'rmd', leagueId: 'laliga', name: 'Real Madrid', elo: 1995, color: '#FEFEFE', xg: 2.1, xga: 0.9, last5: [3, 3, 3, 3, 1], rank: 1, value: 1340, restDays: 7, injuries: 2, formRating: 94, shots: 16.8, shotsOnTarget: 6.4, cleanSheets: 15, goalsConceded: 0.85 },
+  { id: 'fcb', leagueId: 'laliga', name: 'Barcelona', elo: 1890, color: '#004D98', xg: 1.9, xga: 1.2, last5: [3, 0, 3, 1, 3], rank: 2, value: 850, restDays: 4, injuries: 4, formRating: 78, shots: 14.9, shotsOnTarget: 5.2, cleanSheets: 11, goalsConceded: 1.2 },
+  { id: 'atm', leagueId: 'laliga', name: 'Atletico Madrid', elo: 1860, color: '#CB3524', xg: 1.7, xga: 1.0, last5: [1, 3, 3, 0, 3], rank: 3, value: 550, restDays: 5, injuries: 2, formRating: 81, shots: 13.5, shotsOnTarget: 4.9, cleanSheets: 13, goalsConceded: 0.95 },
+  { id: 'rso', leagueId: 'laliga', name: 'Real Sociedad', elo: 1785, color: '#005CA4', xg: 1.5, xga: 1.1, last5: [3, 1, 0, 1, 3], rank: 6, value: 480, restDays: 7, injuries: 3, formRating: 72, shots: 12.2, shotsOnTarget: 4.1, cleanSheets: 10, goalsConceded: 1.1 },
+  { id: 'ath', leagueId: 'laliga', name: 'Athletic Bilbao', elo: 1760, color: '#EE2523', xg: 1.45, xga: 1.1, last5: [3, 3, 0, 1, 3], rank: 5, value: 420, restDays: 6, injuries: 1, formRating: 77, shots: 12.8, shotsOnTarget: 4.3, cleanSheets: 12, goalsConceded: 1.0 },
+  { id: 'gir', leagueId: 'laliga', name: 'Girona', elo: 1740, color: '#CD1F29', xg: 1.6, xga: 1.3, last5: [3, 3, 3, 0, 1], rank: 4, value: 350, restDays: 6, injuries: 2, formRating: 79, shots: 13.0, shotsOnTarget: 4.6, cleanSheets: 8, goalsConceded: 1.25 },
+  { id: 'val', leagueId: 'laliga', name: 'Valencia', elo: 1680, color: '#FF7F00', xg: 1.3, xga: 1.4, last5: [1, 0, 3, 0, 1], rank: 9, value: 280, restDays: 5, injuries: 3, formRating: 60, shots: 11.5, shotsOnTarget: 3.8, cleanSheets: 7, goalsConceded: 1.35 },
+
+  // --- CHAMPIONS LEAGUE ---
+  { id: 'bay', leagueId: 'ucl', name: 'Bayern Munich', elo: 1910, color: '#DC052D', xg: 2.4, xga: 1.0, last5: [3, 1, 0, 3, 3], rank: 1, value: 950, restDays: 6, injuries: 2, formRating: 82, shots: 17.5, shotsOnTarget: 6.5, cleanSheets: 13, goalsConceded: 1.1 },
+  { id: 'psg', leagueId: 'ucl', name: 'Paris Saint-Germain', elo: 1885, color: '#002F6C', xg: 2.1, xga: 1.1, last5: [3, 3, 1, 3, 3], rank: 2, value: 1020, restDays: 6, injuries: 2, formRating: 88, shots: 15.8, shotsOnTarget: 5.9, cleanSheets: 11, goalsConceded: 1.05 },
+  { id: 'int', leagueId: 'ucl', name: 'Inter Milan', elo: 1925, color: '#001E62', xg: 2.0, xga: 0.85, last5: [3, 1, 3, 3, 0], rank: 3, value: 680, restDays: 5, injuries: 1, formRating: 85, shots: 14.2, shotsOnTarget: 5.1, cleanSheets: 15, goalsConceded: 0.8 },
+  { id: 'bvb', leagueId: 'ucl', name: 'Borussia Dortmund', elo: 1820, color: '#FDE100', xg: 1.7, xga: 1.3, last5: [1, 3, 0, 3, 1], rank: 4, value: 460, restDays: 7, injuries: 3, formRating: 69, shots: 13.9, shotsOnTarget: 4.7, cleanSheets: 8, goalsConceded: 1.3 },
+  { id: 'b04', leagueId: 'ucl', name: 'Bayer Leverkusen', elo: 1840, color: '#000000', xg: 1.85, xga: 1.0, last5: [3, 3, 3, 3, 3], rank: 1, value: 550, restDays: 6, injuries: 1, formRating: 90, shots: 14.5, shotsOnTarget: 5.5, cleanSheets: 12, goalsConceded: 0.9 },
+  { id: 'acm', leagueId: 'ucl', name: 'AC Milan', elo: 1800, color: '#FB090B', xg: 1.6, xga: 1.2, last5: [3, 1, 0, 3, 1], rank: 3, value: 520, restDays: 5, injuries: 3, formRating: 70, shots: 13.6, shotsOnTarget: 4.8, cleanSheets: 9, goalsConceded: 1.2 },
+
+  // --- WORLD CUP ---
+  { id: 'arg', leagueId: 'worldcup', name: 'Argentina', elo: 2015, color: '#75AADB', xg: 2.1, xga: 0.75, last5: [3, 3, 3, 1, 3], rank: 1, value: 850, restDays: 6, injuries: 1, formRating: 95, shots: 15.2, shotsOnTarget: 6.0, cleanSheets: 18, goalsConceded: 0.6 },
+  { id: 'fra', leagueId: 'worldcup', name: 'France', elo: 1990, color: '#002395', xg: 2.3, xga: 0.95, last5: [3, 1, 3, 3, 3], rank: 2, value: 1040, restDays: 5, injuries: 2, formRating: 90, shots: 16.5, shotsOnTarget: 6.2, cleanSheets: 14, goalsConceded: 0.85 },
+  { id: 'bra', leagueId: 'worldcup', name: 'Brazil', elo: 1940, color: '#FEDF00', xg: 1.9, xga: 1.1, last5: [1, 3, 0, 3, 1], rank: 5, value: 920, restDays: 6, injuries: 4, formRating: 72, shots: 14.8, shotsOnTarget: 5.5, cleanSheets: 10, goalsConceded: 1.0 },
+  { id: 'eng', leagueId: 'worldcup', name: 'England', elo: 1935, color: '#FFFFFF', xg: 1.85, xga: 0.8, last5: [3, 3, 1, 0, 3], rank: 4, value: 1150, restDays: 7, injuries: 2, formRating: 80, shots: 13.9, shotsOnTarget: 4.9, cleanSheets: 12, goalsConceded: 0.8 },
+  { id: 'esp', leagueId: 'worldcup', name: 'Spain', elo: 1965, color: '#F1BF00', xg: 2.1, xga: 0.85, last5: [3, 3, 3, 1, 3], rank: 3, value: 960, restDays: 6, injuries: 1, formRating: 92, shots: 16.1, shotsOnTarget: 5.8, cleanSheets: 13, goalsConceded: 0.8 },
+  { id: 'ned', leagueId: 'worldcup', name: 'Netherlands', elo: 1850, color: '#FF7F00', xg: 1.6, xga: 1.1, last5: [3, 1, 0, 3, 3], rank: 6, value: 650, restDays: 6, injuries: 2, formRating: 76, shots: 13.5, shotsOnTarget: 4.8, cleanSheets: 9, goalsConceded: 1.1 },
+  { id: 'por', leagueId: 'worldcup', name: 'Portugal', elo: 1880, color: '#FF0000', xg: 1.8, xga: 1.0, last5: [3, 3, 1, 3, 0], rank: 5, value: 950, restDays: 6, injuries: 1, formRating: 84, shots: 14.5, shotsOnTarget: 5.2, cleanSheets: 11, goalsConceded: 0.95 },
+  { id: 'ger', leagueId: 'worldcup', name: 'Germany', elo: 1865, color: '#000000', xg: 1.75, xga: 1.1, last5: [1, 3, 1, 3, 0], rank: 7, value: 800, restDays: 6, injuries: 3, formRating: 74, shots: 14.2, shotsOnTarget: 5.0, cleanSheets: 8, goalsConceded: 1.2 },
+  { id: 'bel', leagueId: 'worldcup', name: 'Belgium', elo: 1820, color: '#EF3340', xg: 1.5, xga: 1.3, last5: [0, 3, 1, 1, 3], rank: 8, value: 550, restDays: 5, injuries: 2, formRating: 68, shots: 12.5, shotsOnTarget: 4.4, cleanSheets: 7, goalsConceded: 1.4 }
+];
+
+export default function App() {
+  // State Management
+  const [selectedLeagueId, setSelectedLeagueId] = useState('epl');
+  const [homeTeamId, setHomeTeamId] = useState('mci');
+  const [awayTeamId, setAwayTeamId] = useState('ars');
+  
+  // Custom Override States for Match Factors (Allows user to play interactive "what-if" simulations)
+  const [homeElo, setHomeElo] = useState(1980);
+  const [awayElo, setAwayElo] = useState(1950);
+  
+  const [homexG, setHomexG] = useState(2.2);
+  const [awayxG, setAwayxG] = useState(2.0);
+  
+  const [homexGA, setHomexGA] = useState(0.9);
+  const [awayxGA, setAwayxGA] = useState(0.8);
+
+  const [homeRecentForm, setHomeRecentForm] = useState(88); // 0 - 100 Rating
+  const [awayRecentForm, setAwayRecentForm] = useState(92);
+
+  const [homeRest, setHomeRest] = useState(6);
+  const [awayRest, setAwayRest] = useState(7);
+
+  const [homeInjuries, setHomeInjuries] = useState(2);
+  const [awayInjuries, setAwayInjuries] = useState(1);
+
+  const [homeAdvantage, setHomeAdvantage] = useState(true);
+  const [weatherCondition, setWeatherCondition] = useState('clear'); // clear, rain, snow, heavy-wind
+  const [travelDistance, setTravelDistance] = useState(120); // Away team travel distance in km
+
+  // Get active teams based on selected league
+  const filteredTeams = useMemo(() => {
+    return INITIAL_TEAMS.filter(t => t.leagueId === selectedLeagueId);
+  }, [selectedLeagueId]);
+
+  // Sync default teams and parameters when switching leagues
+  useEffect(() => {
+    if (filteredTeams.length >= 2) {
+      setHomeTeamId(filteredTeams[0].id);
+      setAwayTeamId(filteredTeams[1].id);
+    }
+  }, [selectedLeagueId, filteredTeams]);
+
+  // API Key State
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    return localStorage.getItem('football_predictor_gemini_api_key') || '';
+  });
+  const [isKeyVisible, setIsKeyVisible] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
+  const [apiErrorMessage, setApiErrorMessage] = useState('');
+
+  // Interactive AI Assistant Chat
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'assistant'; text: string; timestamp: Date }>>([
+    { 
+      sender: 'assistant', 
+      text: "Hello! I am your AI Football Analyst. Ask me anything about this match! E.g., 'Why is the home team favored?', 'What impact do injuries have on this matchup?', or 'How does weather alter our prediction?'", 
+      timestamp: new Date() 
+    }
+  ]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll chat to bottom
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isAiLoading]);
+
+  // Synchronize custom overrides when selected team changes
+  useEffect(() => {
+    const home = INITIAL_TEAMS.find(t => t.id === homeTeamId);
+    if (home) {
+      setHomeElo(home.elo);
+      setHomexG(home.xg);
+      setHomexGA(home.xga);
+      setHomeRecentForm(home.formRating);
+      setHomeRest(home.restDays);
+      setHomeInjuries(home.injuries);
+    }
+  }, [homeTeamId]);
+
+  useEffect(() => {
+    const away = INITIAL_TEAMS.find(t => t.id === awayTeamId);
+    if (away) {
+      setAwayElo(away.elo);
+      setAwayxG(away.xg);
+      setAwayxGA(away.xga);
+      setAwayRecentForm(away.formRating);
+      setAwayRest(away.restDays);
+      setAwayInjuries(away.injuries);
+    }
+  }, [awayTeamId]);
+
+  // Handle saving API key
+  const handleSaveApiKey = (val: string) => {
+    setGeminiApiKey(val);
+    localStorage.setItem('football_predictor_gemini_api_key', val);
+    if (!val) {
+      setTestStatus('idle');
+      setApiErrorMessage('');
+    }
+  };
+
+  // Test the Gemini API Key
+  const handleTestApiKey = async () => {
+    if (!geminiApiKey.trim()) {
+      setTestStatus('failed');
+      setApiErrorMessage('API Key cannot be blank.');
+      return;
+    }
+    setTestStatus('testing');
+    setApiErrorMessage('');
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Respond with the word "Success" and nothing else.' }] }]
+          })
+        }
+      );
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson?.error?.message || `HTTP ${response.status}`);
+      }
+      setTestStatus('success');
+    } catch (err: any) {
+      setTestStatus('failed');
+      setApiErrorMessage(err.message || 'Verification failed. Check connectivity or key validity.');
+    }
+  };
+
+  // Safeguard: Ensure home and away teams are different, searching ONLY inside filteredTeams (active league)
+  const handleHomeTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setHomeTeamId(val);
+    if (val === awayTeamId) {
+      const alternative = filteredTeams.find(t => t.id !== val);
+      if (alternative) setAwayTeamId(alternative.id);
+    }
+  };
+
+  const handleAwayTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setAwayTeamId(val);
+    if (val === homeTeamId) {
+      const alternative = filteredTeams.find(t => t.id !== val);
+      if (alternative) setHomeTeamId(alternative.id);
+    }
+  };
+
+  const currentHomeTeam = INITIAL_TEAMS.find(t => t.id === homeTeamId) || INITIAL_TEAMS[0];
+  const currentAwayTeam = INITIAL_TEAMS.find(t => t.id === awayTeamId) || INITIAL_TEAMS[1];
+
+  // Dynamic Home Advantage label to support cups, neutral venue, and custom stadium layouts
+  const homeAdvantageLabel = useMemo(() => {
+    if (selectedLeagueId === 'worldcup') {
+      return '🏟️ Host Nation / Crowd Support (+85 Elo)';
+    }
+    if (selectedLeagueId === 'ucl') {
+      return '🏟️ Home Ground Advantage (Leg 1/Leg 2) (+85 Elo)';
+    }
+    return '🏟️ Home Ground Advantage (+85 Elo)';
+  }, [selectedLeagueId]);
+
+  // Helper: Simple Poisson probability calculation P(k; λ) = (λ^k * e^-λ) / k!
+  const poisson = (k: number, lambda: number): number => {
+    const e = Math.E;
+    let factorial = 1;
+    for (let i = 1; i <= k; i++) factorial *= i;
+    return (Math.pow(lambda, k) * Math.pow(e, -lambda)) / factorial;
+  };
+
+  // --- STATISTICAL MODEL ENGINE ---
+  const prediction = useMemo(() => {
+    const adjustedHomeElo = homeElo + (homeAdvantage ? 85 : 0);
+    const adjustedAwayElo = awayElo;
+    
+    const homeEloExpected = 1 / (1 + Math.pow(10, (adjustedAwayElo - adjustedHomeElo) / 400));
+    const awayEloExpected = 1 - homeEloExpected;
+    
+    const drawEloFactor = 0.26 * (1 - Math.abs(homeEloExpected - 0.5) * 1.5);
+    const homeEloProb = Math.max(0.05, homeEloExpected - (drawEloFactor / 2));
+    const awayEloProb = Math.max(0.05, awayEloExpected - (drawEloFactor / 2));
+    const drawEloProb = 1 - homeEloProb - awayEloProb;
+
+    let finalHomeExpectedGoals = homexG * (awayxGA / 1.0);
+    let finalAwayExpectedGoals = awayxG * (homexGA / 1.0);
+
+    if (homeAdvantage) finalHomeExpectedGoals *= 1.12; 
+    
+    if (homeRest < 4) finalHomeExpectedGoals *= 0.90;
+    if (awayRest < 4) finalAwayExpectedGoals *= 0.90;
+    
+    finalHomeExpectedGoals *= (1 - (homeInjuries * 0.04));
+    finalAwayExpectedGoals *= (1 - (awayInjuries * 0.04));
+
+    if (weatherCondition === 'rain') {
+      finalHomeExpectedGoals *= 0.95;
+      finalAwayExpectedGoals *= 0.95;
+    } else if (weatherCondition === 'heavy-wind' || weatherCondition === 'snow') {
+      finalHomeExpectedGoals *= 0.88;
+      finalAwayExpectedGoals *= 0.88;
+    }
+
+    // Safely clamp goals expectation index to prevent zero/negative calculation errors
+    finalHomeExpectedGoals = Math.max(0.05, finalHomeExpectedGoals);
+    finalAwayExpectedGoals = Math.max(0.05, finalAwayExpectedGoals);
+
+    let homePoissonWin = 0;
+    let awayPoissonWin = 0;
+    let poissonDraw = 0;
+    const scoreGrid: { score: string; prob: number }[] = [];
+
+    for (let h = 0; h < 7; h++) {
+      for (let a = 0; a < 7; a++) {
+        const hProb = poisson(h, finalHomeExpectedGoals);
+        const aProb = poisson(a, finalAwayExpectedGoals);
+        const jointProb = hProb * aProb;
+
+        scoreGrid.push({ score: `${h}-${a}`, prob: jointProb });
+
+        if (h > a) {
+          homePoissonWin += jointProb;
+        } else if (a > h) {
+          awayPoissonWin += jointProb;
+        } else {
+          poissonDraw += jointProb;
+        }
+      }
+    }
+
+    const poissonTotal = homePoissonWin + awayPoissonWin + poissonDraw;
+    const homePoissonProb = homePoissonWin / poissonTotal;
+    const awayPoissonProb = awayPoissonWin / poissonTotal;
+    const drawPoissonProb = poissonDraw / poissonTotal;
+
+    const sortedScoreGrid = [...scoreGrid].sort((a, b) => b.prob - a.prob);
+    const topScores = sortedScoreGrid.slice(0, 3).map(item => ({
+      score: item.score,
+      prob: Math.round(item.prob * 100)
+    }));
+
+    const totalFormSum = homeRecentForm + awayRecentForm;
+    let homeFormProb = homeRecentForm / totalFormSum;
+    let awayFormProb = awayRecentForm / totalFormSum;
+    
+    const formDiffModifier = Math.abs(homeRecentForm - awayRecentForm) / 100;
+    const drawFormProb = 0.28 - (formDiffModifier * 0.15);
+    
+    homeFormProb = homeFormProb * (1 - drawFormProb);
+    awayFormProb = awayFormProb * (1 - drawFormProb);
+
+    const eloDifference = adjustedHomeElo - adjustedAwayElo;
+    const xgDifference = finalHomeExpectedGoals - finalAwayExpectedGoals;
+    const restDifference = homeRest - awayRest;
+    const injuryDifference = homeInjuries - awayInjuries;
+
+    let logOddsHome = (eloDifference * 0.0035) + (xgDifference * 0.8) + (restDifference * 0.05) - (injuryDifference * 0.08);
+    if (homeAdvantage) logOddsHome += 0.25;
+
+    if (travelDistance > 500) logOddsHome += 0.12;
+
+    const expHome = Math.exp(logOddsHome);
+    const mlHomeProbBase = expHome / (1 + expHome);
+    const mlDrawProb = 0.25 * (1 - Math.min(0.8, Math.abs(mlHomeProbBase - 0.5) * 1.5));
+    const mlHomeProb = mlHomeProbBase * (1 - mlDrawProb);
+    const mlAwayProb = 1 - mlHomeProb - mlDrawProb;
+
+    let homeWinFinal = (homePoissonProb * 0.40) + (homeEloProb * 0.30) + (mlHomeProb * 0.20) + (homeFormProb * 0.10);
+    let drawFinal = (drawPoissonProb * 0.40) + (drawEloProb * 0.30) + (mlDrawProb * 0.20) + (drawFormProb * 0.10);
+    let awayWinFinal = (awayPoissonProb * 0.40) + (awayEloProb * 0.30) + (mlAwayProb * 0.20) + (awayFormProb * 0.10);
+
+    const finalSum = homeWinFinal + drawFinal + awayWinFinal;
+    const finalHomePercentage = Number(((homeWinFinal / finalSum) * 100).toFixed(1));
+    const finalDrawPercentage = Number(((drawFinal / finalSum) * 100).toFixed(1));
+    const finalAwayPercentage = Number((100.0 - finalHomePercentage - finalDrawPercentage).toFixed(1));
+
+    const deviations = [
+      Math.abs(homePoissonProb - homeEloProb),
+      Math.abs(homePoissonProb - mlHomeProb),
+      Math.abs(homeEloProb - mlHomeProb)
+    ];
+    const averageDeviation = deviations.reduce((a, b) => a + b, 0) / 3;
+    
+    let confidenceRating = "Medium";
+    let confidenceScore = 65;
+    
+    if (averageDeviation < 0.08 && (finalHomePercentage > 55 || finalAwayPercentage > 55)) {
+      confidenceRating = "High";
+      confidenceScore = Math.min(95, 75 + Math.round((1 - averageDeviation) * 15));
+    } else if (averageDeviation > 0.18 || Math.abs(finalHomePercentage - finalAwayPercentage) < 15) {
+      confidenceRating = "Low";
+      confidenceScore = Math.max(30, 45 - Math.round(averageDeviation * 30));
+    } else {
+      confidenceScore = Math.round(55 + (finalHomePercentage > finalAwayPercentage ? finalHomePercentage - 50 : finalAwayPercentage - 50) * 0.4);
+    }
+
+    return {
+      homeWin: finalHomePercentage,
+      draw: finalDrawPercentage,
+      awayWin: finalAwayPercentage,
+      topScores,
+      confidenceRating,
+      confidenceScore,
+      homeExpectedGoals: finalHomeExpectedGoals.toFixed(2),
+      awayExpectedGoals: finalAwayExpectedGoals.toFixed(2),
+      individualModels: {
+        poisson: { home: Math.round(homePoissonProb * 100), draw: Math.round(drawPoissonProb * 100), away: Math.round(awayPoissonProb * 100) },
+        elo: { home: Math.round(homeEloProb * 100), draw: Math.round(drawEloProb * 100), away: Math.round(awayEloProb * 100) },
+        ml: { home: Math.round(mlHomeProb * 100), draw: Math.round(mlDrawProb * 100), away: Math.round(mlAwayProb * 100) },
+        form: { home: Math.round(homeFormProb * 100), draw: Math.round(drawFormProb * 100), away: Math.round(awayFormProb * 100) }
+      }
+    };
+  }, [
+    homeElo, awayElo, 
+    homexG, awayxG, 
+    homexGA, awayxGA, 
+    homeRecentForm, awayRecentForm, 
+    homeRest, awayRest, 
+    homeInjuries, awayInjuries, 
+    homeAdvantage, weatherCondition, travelDistance
+  ]);
+
+  // Exponential Backoff API Wrapper for Gemini Core Rules
+  const callGeminiWithBackoff = async (payload: any, retries = 5, initialDelay = 1000): Promise<any> => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+    let currentDelay = initialDelay;
+
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          return await response.json();
+        }
+
+        if (response.status === 429 || response.status >= 500) {
+          // Trigger backoff retry
+          await new Promise(resolve => setTimeout(resolve, currentDelay));
+          currentDelay *= 2;
+          continue;
+        }
+
+        // Unrecoverable errors
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson?.error?.message || `HTTP Server Error ${response.status}`);
+      } catch (error: any) {
+        if (attempt === retries - 1) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, currentDelay));
+        currentDelay *= 2;
+      }
+    }
+  };
+
+  // AI Assistant Chat Response Trigger (Supporting User Key and Mock Fallbacks)
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMessage = chatInput;
+    setChatMessages(prev => [...prev, { sender: 'user', text: userMessage, timestamp: new Date() }]);
+    setChatInput('');
+    setIsAiLoading(true);
+
+    const homeName = currentHomeTeam.name;
+    const awayName = currentAwayTeam.name;
+    const activeLeagueName = LEAGUES.find(l => l.id === selectedLeagueId)?.name || 'Football Matches';
+
+    // Build the hyper-detailed system instruction that is injected into Gemini
+    const systemPrompt = `You are "Football Win Predictor Pro", an elite statistical soccer strategist and AI tactical analyst. 
+Analyze the current live-slider configuration setup:
+• League / Tournament Context: ${activeLeagueName}
+• Matchup: ${homeName} (Home) vs ${awayName} (Away)
+• Stats Context:
+  - Base Elo: Home = ${homeElo}, Away = ${awayElo}
+  - Initial season xG/G: Home = ${homexG}, Away = ${awayxG}
+  - Adjusted Expected Goals based on active conditions: Home Projected Goals = ${prediction.homeExpectedGoals}, Away Projected Goals = ${prediction.awayExpectedGoals}
+  - Fitness factors: Home rest = ${homeRest} days, Home injuries = ${homeInjuries} players; Away rest = ${awayRest} days, Away injuries = ${awayInjuries} players.
+  - Climate / Environment: Weather = ${weatherCondition}, Away Team Travel Distance = ${travelDistance}km, Home Stadium Advantage = ${homeAdvantage ? "Active (+85 ELO bonus applied)" : "Deactivated (Neutral Ground)"}.
+• Mathematical Predictions Calculated by Ensemble Engine:
+  - Home Win Probability: ${prediction.homeWin}%
+  - Draw Probability: ${prediction.draw}%
+  - Away Win Probability: ${prediction.awayWin}%
+  - Top 3 Likeliest exact Scorelines: ${prediction.topScores.map(s => `${s.score} (${s.prob}%)`).join(', ')}.
+  - Ensemble Model Confidence: ${prediction.confidenceScore}% (${prediction.confidenceRating} confidence metrics).
+
+Instructions for your response:
+1. Provide a sharp, data-driven explanation for whatever the user asks.
+2. Incorporate the active state values (ELO, Injuries, xG, Weather, Rest Days, League setting) to justify your sports journalism.
+3. Be professional, engaging, and authoritative. Highlight tactical formations, key matchups, and tournament-specific stakes.
+4. Keep paragraphs structured and readable with standard markdown bullets and bold headers.`;
+
+    // Mode A: Live Gemini API Key provided
+    if (geminiApiKey.trim()) {
+      try {
+        const payload = {
+          contents: [{ parts: [{ text: userMessage }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800
+          }
+        };
+
+        const result = await callGeminiWithBackoff(payload);
+        const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (aiText) {
+          setChatMessages(prev => [...prev, { 
+            sender: 'assistant', 
+            text: aiText, 
+            timestamp: new Date() 
+          }]);
+        } else {
+          throw new Error("Invalid response format received from Gemini.");
+        }
+      } catch (err: any) {
+        setChatMessages(prev => [...prev, { 
+          sender: 'assistant', 
+          text: `❌ **Gemini Live API Request Failed**\n\n${err.message || 'An unknown network error occurred.'}\n\nPlease check your API key in the far right text bar and confirm you have available quota, or clear the key to run in Simulated Sandbox mode.`, 
+          timestamp: new Date() 
+        }]);
+      } finally {
+        setIsAiLoading(false);
+      }
+      return;
+    }
+
+    // Mode B: Mock Local Analysis (Simulated mode if API key is not entered)
+    setTimeout(() => {
+      let aiResponseText = "";
+      const lower = userMessage.toLowerCase();
+      
+      if (lower.includes('why') || lower.includes('favorite') || lower.includes('win') || lower.includes('probabilit')) {
+        const favoriteName = prediction.homeWin > prediction.awayWin ? homeName : awayName;
+        const favoriteProb = Math.max(prediction.homeWin, prediction.awayWin);
+        const underdogName = prediction.homeWin > prediction.awayWin ? awayName : homeName;
+        const eloDiff = Math.abs(homeElo - awayElo);
+        
+        aiResponseText = `### Live Forecast Breakdown
+
+Our unified Ensemble engine favors **${favoriteName}** with a **${favoriteProb}%** probability of taking all 3 points, while **${underdogName}** sits at **${prediction.homeWin > prediction.awayWin ? prediction.awayWin : prediction.homeWin}%** to win.
+
+**Key Influencing Dynamics:**
+• **Elo Differential**: ${favoriteName === homeName ? (homeElo > awayElo ? `Superior standard Elo by ${eloDiff} points.` : `Standard ELO value bolstered by active home turf support.`) : (awayElo > homeElo ? `Clear class differential with an ELO advantage of ${eloDiff} points.` : `Tactical form offsetting historical gaps.`)}
+• **Adjusted Expected Goals (xG)**: ${favoriteName === homeName ? prediction.homeExpectedGoals : prediction.awayExpectedGoals} goals projected in today's setup.
+• **Fatigue Delta**: ${favoriteName === homeName ? `${homeRest} recovery days compared to ${awayRest} for the visitors.` : `${awayRest} recovery days compared to ${homeRest} for the home side.`}
+• **Physical Attrition**: ${favoriteName === homeName ? `${homeInjuries} list absences against ${awayInjuries}` : `${awayInjuries} absences against ${homeInjuries}`}.
+
+*Tip: Set your Gemini API key in the right sidebar to query live deep tactical analysis tailored directly to your custom sliders.*`;
+      } else if (lower.includes('weather') || lower.includes('rain') || lower.includes('snow') || lower.includes('wind')) {
+        aiResponseText = `### Tactical Weather Report: ${weatherCondition.toUpperCase()}
+
+Severe weather heavily limits goalscoring variance:
+• **Pitch Attrition**: Ball friction is degraded, amplifying long-range dynamic opportunities but limiting clean string passes.
+• **Goal Depressurization**: Expected Goals (xG) have been scaled downwards by ~12% in this simulation.
+• **Draw Expansion**: Under heavy weather, the draw outcome probability rises to **${prediction.draw}%** by narrowing the skill threshold gap.`;
+      } else if (lower.includes('injury') || lower.includes('injuries')) {
+        aiResponseText = `### Attrition & Squad Depth Analysis
+
+Lineup exclusions disrupt team tactical cohesion:
+• **${homeName}** is operating with **${homeInjuries}** crucial first-team players sidelined.
+• **${awayName}** reports **${awayInjuries}** squad absences.
+• Each key absence forces tactical adaptation, lowering defensive integrity and adjusting offensive potency down by roughly 4% per major player out.`;
+      } else if (lower.includes('score') || lower.includes('scoreline') || lower.includes('goals')) {
+        aiResponseText = `### Poisson Goal Frequency Matrix
+
+Based on active parameters, the most probable scorelines are:
+1. **${prediction.topScores[0].score}** — ${prediction.topScores[0].prob}% Likelihood
+2. **${prediction.topScores[1].score}** — ${prediction.topScores[1].prob}% Likelihood
+3. **${prediction.topScores[2].score}** — ${prediction.topScores[2].prob}% Likelihood
+
+*Calculated via individual team output indices (Home projected goals: ${prediction.homeExpectedGoals}, Away: ${prediction.awayExpectedGoals}).*`;
+      } else {
+        aiResponseText = `### Analytics Summary: ${homeName} vs ${awayName}
+
+As your system Football Analyst, here is our current calculation summary:
+• **Home Win**: ${prediction.homeWin}%
+• **Draw**: ${prediction.draw}%
+• **Away Win**: ${prediction.awayWin}%
+
+Enter your Gemini API key on the right sidebar to unlock customizable neural-network conversations!`;
+      }
+
+      setChatMessages(prev => [...prev, { sender: 'assistant', text: aiResponseText, timestamp: new Date() }]);
+      setIsAiLoading(false);
+    }, 1200);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-900">
+      
+      {/* HEADER BAR */}
+      <header className="border-b border-slate-800 bg-slate-900/95 sticky top-0 z-40">
+        <div className="max-w-[1600px] mx-auto px-4 py-3.5 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-500 text-slate-950 p-2.5 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                FOOTBALL WIN PREDICTOR PRO
+              </h1>
+              <p className="text-xs text-slate-400">Advanced Multi-Model Ensemble Predictive Engine</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <div className="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-slate-300 font-medium">{LEAGUES.find(l => l.id === selectedLeagueId)?.name || 'League System'}</span>
+            </div>
+            <div className="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-slate-300 font-medium">Model Engine v2.5.2</span>
+            </div>
+            <div className="bg-emerald-950/40 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1">
+              <Percent className="w-3.5 h-3.5" />
+              <span>Acc: 68.4%</span>
+            </div>
+            <div className="bg-slate-850 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-300 flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-blue-400" />
+              <span>Mode: {geminiApiKey ? 'Live Gemini AI' : 'Local Sandbox'}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTAINER */}
+      <main className="max-w-[1600px] mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        
+        {/* STATS STRIP */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-xl">
+          <div className="flex items-center gap-3 p-2">
+            <div className="p-2.5 bg-slate-850 rounded-xl text-emerald-400 border border-slate-800">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Backtested Models</div>
+              <div className="text-lg font-black text-slate-100">2,354</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="p-2.5 bg-slate-850 rounded-xl text-teal-400 border border-slate-800">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Ensemble Accuracy</div>
+              <div className="text-lg font-black text-slate-100">68.4%</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="p-2.5 bg-slate-850 rounded-xl text-purple-400 border border-slate-800">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Yield / ROI Simulation</div>
+              <div className="text-lg font-black text-emerald-400">+14.2%</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="p-2.5 bg-slate-850 rounded-xl text-yellow-400 border border-slate-800">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Average Confidence</div>
+              <div className="text-lg font-black text-yellow-400">74%</div>
+            </div>
+          </div>
+        </section>
+
+        {/* WORKSPACE GRID - 3-COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* COLUMN 1: SELECTORS & SLIDERS (lg:col-span-4) */}
+          <section className="lg:col-span-4 space-y-6">
+            
+            {/* MATCH ASSEMBLY & LOGOS */}
+            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-xs tracking-wider uppercase text-emerald-400 flex items-center gap-2">
+                  <Sliders className="w-4 h-4" /> Match Assembly
+                </h3>
+                <button 
+                  onClick={() => {
+                    setSelectedLeagueId('epl');
+                    setHomeAdvantage(true);
+                    setWeatherCondition('clear');
+                    setTravelDistance(120);
+                  }}
+                  className="text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                  title="Reset variables to default"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset Default
+                </button>
+              </div>
+
+              {/* League Selector Dropdown */}
+              <div className="space-y-2">
+                <label className="text-xs text-slate-400 block font-semibold">Active League / Tournament</label>
+                <select
+                  value={selectedLeagueId}
+                  onChange={(e) => setSelectedLeagueId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-400"
+                >
+                  {LEAGUES.map(league => (
+                    <option key={league.id} value={league.id}>{league.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Team Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs text-slate-400 block font-semibold">Home Side</label>
+                  <select 
+                    value={homeTeamId}
+                    onChange={handleHomeTeamChange}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-200"
+                  >
+                    {filteredTeams.map(team => (
+                      <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs text-slate-400 block font-semibold">Away Side</label>
+                  <select 
+                    value={awayTeamId}
+                    onChange={handleAwayTeamChange}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-200"
+                  >
+                    {filteredTeams.map(team => (
+                      <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Dynamic Environmental parameters */}
+              <div className="pt-2 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium flex items-center gap-1.5 truncate">
+                    {homeAdvantageLabel}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={homeAdvantage}
+                      onChange={(e) => setHomeAdvantage(e.target.checked)}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-400 font-medium">Weather Condition</label>
+                    <select
+                      value={weatherCondition}
+                      onChange={(e) => setWeatherCondition(e.target.value)}
+                      className="w-full bg-slate-950 text-[11px] border border-slate-800 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="clear">☀️ Clear Skies</option>
+                      <option value="rain">🌧️ Heavy Rain</option>
+                      <option value="snow">❄️ Snow / Ice</option>
+                      <option value="heavy-wind">💨 High Winds</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-400 font-medium">Away Travel Distance</label>
+                    <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1">
+                      <input 
+                        type="number"
+                        min="0"
+                        max="3000"
+                        value={travelDistance}
+                        onChange={(e) => setTravelDistance(Number(e.target.value))}
+                        className="w-full bg-transparent text-[11px] text-slate-100 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500">km</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* WHAT-IF SIMULATION SLIDERS */}
+            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 className="font-bold text-xs tracking-wider uppercase text-emerald-400 flex items-center gap-2">
+                  <Activity className="w-4 h-4" /> Custom Parameter Sliders
+                </h3>
+                <span className="text-[10px] text-slate-500">Real-time update</span>
+              </div>
+
+              {/* TEAM ELO DIFFERENCE */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-300 font-semibold">🛡️ Base ELO Ratings</span>
+                  <span className="text-slate-400 font-mono text-[11px]">H: {homeElo} vs A: {awayElo}</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Home</span>
+                    <input 
+                      type="range" 
+                      min="1500" 
+                      max="2100" 
+                      value={homeElo}
+                      onChange={(e) => setHomeElo(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Away</span>
+                    <input 
+                      type="range" 
+                      min="1500" 
+                      max="2100" 
+                      value={awayElo}
+                      onChange={(e) => setAwayElo(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* EXPECTED GOALS (xG) ATTACK INDICES */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-300 font-semibold">🔥 Attack xG Rates (Season)</span>
+                  <span className="text-slate-400 font-mono text-[11px]">H: {homexG} vs A: {awayxG}</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Home</span>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="3.5" 
+                      step="0.1"
+                      value={homexG}
+                      onChange={(e) => setHomexG(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Away</span>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="3.5" 
+                      step="0.1"
+                      value={awayxG}
+                      onChange={(e) => setAwayxG(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* RECENT FORM % STREAK */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-300 font-semibold">📈 Recent Form Performance</span>
+                  <span className="text-slate-400 font-mono text-[11px]">{homeRecentForm}% vs {awayRecentForm}%</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Home</span>
+                    <input 
+                      type="range" 
+                      min="30" 
+                      max="100" 
+                      value={homeRecentForm}
+                      onChange={(e) => setHomeRecentForm(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-8">Away</span>
+                    <input 
+                      type="range" 
+                      min="30" 
+                      max="100" 
+                      value={awayRecentForm}
+                      onChange={(e) => setAwayRecentForm(Number(e.target.value))}
+                      className="w-full accent-emerald-500 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SQUAD CONSTRAINTS: INJURIES & REST DAYS */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-2">
+                  <label className="text-[11px] text-slate-300 font-semibold">🚑 Squad Injuries</label>
+                  <div className="grid grid-cols-2 gap-1.5 text-center">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-1.5">
+                      <span className="text-[9px] block text-slate-500">Home</span>
+                      <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <button 
+                          onClick={() => setHomeInjuries(prev => Math.max(0, prev - 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >-</button>
+                        <span className="text-xs font-semibold">{homeInjuries}</span>
+                        <button 
+                          onClick={() => setHomeInjuries(prev => Math.min(8, prev + 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >+</button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-1.5">
+                      <span className="text-[9px] block text-slate-500">Away</span>
+                      <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <button 
+                          onClick={() => setAwayInjuries(prev => Math.max(0, prev - 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >-</button>
+                        <span className="text-xs font-semibold">{awayInjuries}</span>
+                        <button 
+                          onClick={() => setAwayInjuries(prev => Math.min(8, prev + 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[11px] text-slate-300 font-semibold">💤 Rest Recovery</label>
+                  <div className="grid grid-cols-2 gap-1.5 text-center">
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-1.5">
+                      <span className="text-[9px] block text-slate-500">Home</span>
+                      <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <button 
+                          onClick={() => setHomeRest(prev => Math.max(2, prev - 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >-</button>
+                        <span className="text-xs font-semibold">{homeRest}d</span>
+                        <button 
+                          onClick={() => setHomeRest(prev => Math.min(14, prev + 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >+</button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-800 rounded-lg p-1.5">
+                      <span className="text-[9px] block text-slate-500">Away</span>
+                      <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <button 
+                          onClick={() => setAwayRest(prev => Math.max(2, prev - 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >-</button>
+                        <span className="text-xs font-semibold">{awayRest}d</span>
+                        <button 
+                          onClick={() => setAwayRest(prev => Math.min(14, prev + 1))}
+                          className="w-4 h-4 bg-slate-800 hover:bg-slate-750 text-xs rounded font-bold"
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* LIVE DATA API INTEGRATION TRIVIA */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 text-xs space-y-3">
+              <div className="flex items-center gap-1.5 text-slate-300 font-bold">
+                <Info className="w-4 h-4 text-emerald-400" />
+                <span>Lineup &amp; Market Dynamics</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-slate-400">Home Value</div>
+                  <div className="text-xs font-bold text-emerald-400">€{currentHomeTeam.value}M</div>
+                </div>
+                <div>
+                  <div className="text-slate-400">Away Value</div>
+                  <div className="text-xs font-bold text-emerald-400">€{currentAwayTeam.value}M</div>
+                </div>
+                <div>
+                  <div className="text-slate-400">Avg. Shots / G</div>
+                  <div className="text-xs font-bold text-slate-200">{(currentHomeTeam.shots).toFixed(1)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-400">Clean Sheets</div>
+                  <div className="text-xs font-bold text-slate-200">{currentHomeTeam.cleanSheets} Games</div>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          {/* COLUMN 2: LIVE PREDICTIONS & ANALYTICS DASHBOARD (lg:col-span-5) */}
+          <section className="lg:col-span-5 space-y-6">
+            
+            {/* ENSEMBLE PROBABILITY DISPLAY */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-3">
+                <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded-full text-[10px] text-emerald-400 font-bold animate-pulse">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Confidence: {prediction.confidenceScore}%</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                  MATCHUP PROBABILITIES
+                </span>
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-1.5">
+                  <span>{currentHomeTeam.name}</span>
+                  <span className="text-slate-500 text-base font-normal">vs</span>
+                  <span>{currentAwayTeam.name}</span>
+                </h2>
+              </div>
+
+              {/* THREE-WAY WIN PROBABILITY GAUGE BAR */}
+              <div className="space-y-3">
+                <div className="h-5 w-full rounded-lg overflow-hidden flex shadow-lg">
+                  <div 
+                    style={{ width: `${prediction.homeWin}%` }} 
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 flex items-center justify-center text-[11px] font-black text-slate-950 transition-all duration-500"
+                  >
+                    <span className="truncate px-1">{prediction.homeWin}%</span>
+                  </div>
+                  <div 
+                    style={{ width: `${prediction.draw}%` }} 
+                    className="bg-slate-700 flex items-center justify-center text-[11px] font-black text-slate-100 transition-all duration-500"
+                  >
+                    <span className="truncate px-1">{prediction.draw}%</span>
+                  </div>
+                  <div 
+                    style={{ width: `${prediction.awayWin}%` }} 
+                    className="bg-gradient-to-l from-rose-500 to-rose-600 flex items-center justify-center text-[11px] font-black text-slate-950 transition-all duration-500"
+                  >
+                    <span className="truncate px-1">{prediction.awayWin}%</span>
+                  </div>
+                </div>
+
+                {/* LEGEND ROW */}
+                <div className="grid grid-cols-3 text-center text-xs font-bold py-1">
+                  <div className="text-emerald-400 flex flex-col items-center">
+                    <span className="text-[9px] text-slate-400 font-semibold uppercase">Home Win</span>
+                    <span className="text-base font-black">{prediction.homeWin}%</span>
+                  </div>
+                  <div className="text-slate-300 flex flex-col items-center">
+                    <span className="text-[9px] text-slate-400 font-semibold uppercase">Draw</span>
+                    <span className="text-base font-black">{prediction.draw}%</span>
+                  </div>
+                  <div className="text-rose-400 flex flex-col items-center">
+                    <span className="text-[9px] text-slate-400 font-semibold uppercase">Away Win</span>
+                    <span className="text-base font-black">{prediction.awayWin}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* OUTCOMES & SCORE predictions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800/85">
+                
+                {/* Scoreline probabilities */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    🎯 Predicted Scorelines
+                  </h4>
+                  <div className="space-y-1.5">
+                    {prediction.topScores.map((sc, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-4 h-4 text-[9px] flex items-center justify-center rounded-full font-bold ${
+                            idx === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {idx + 1}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-slate-100">{sc.score}</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400">{sc.prob}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expected Goals & Strength Breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    📊 Goal Expectations (xG)
+                  </h4>
+                  <div className="space-y-1.5 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-400">Home Expected xG:</span>
+                      <span className="font-mono font-bold text-emerald-400">{prediction.homeExpectedGoals}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-400">Away Expected xG:</span>
+                      <span className="font-mono font-bold text-rose-400">{prediction.awayExpectedGoals}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] border-t border-slate-800 pt-1">
+                      <span className="text-slate-400">Status:</span>
+                      <span className={`font-bold text-[9px] uppercase px-1.5 py-0.5 rounded ${
+                        prediction.confidenceRating === 'High' ? 'bg-emerald-950 text-emerald-400' :
+                        prediction.confidenceRating === 'Medium' ? 'bg-slate-800 text-yellow-400' : 'bg-rose-950 text-rose-400'
+                      }`}>
+                        {prediction.confidenceRating} Confidence
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* UNDERLYING MODEL OUTPUTS */}
+            <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-md space-y-3">
+              <h3 className="font-bold text-xs tracking-wider uppercase text-emerald-400 flex items-center gap-2">
+                <LineChart className="w-4 h-4" /> Model Weight Outputs
+              </h3>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                
+                {/* Poisson */}
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 flex flex-col justify-between">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
+                    <span className="text-[11px] font-bold text-slate-300">1. Poisson (40%)</span>
+                    <span className="text-[9px] text-slate-500">Pure Goal-xG</span>
+                  </div>
+                  <div className="text-[10px] font-mono space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Home:</span>
+                      <span className="text-emerald-400 font-bold">{prediction.individualModels.poisson.home}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Draw:</span>
+                      <span className="text-slate-300 font-bold">{prediction.individualModels.poisson.draw}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Away:</span>
+                      <span className="text-rose-400 font-bold">{prediction.individualModels.poisson.away}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Elo */}
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 flex flex-col justify-between">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
+                    <span className="text-[11px] font-bold text-slate-300">2. ELO Rating (30%)</span>
+                    <span className="text-[9px] text-slate-500">Team Strength</span>
+                  </div>
+                  <div className="text-[10px] font-mono space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Home:</span>
+                      <span className="text-emerald-400 font-bold">{prediction.individualModels.elo.home}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Draw:</span>
+                      <span className="text-slate-300 font-bold">{prediction.individualModels.elo.draw}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Away:</span>
+                      <span className="text-rose-400 font-bold">{prediction.individualModels.elo.away}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* XGBoost */}
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 flex flex-col justify-between">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
+                    <span className="text-[11px] font-bold text-slate-300">3. XGBoost ML (20%)</span>
+                    <span className="text-[9px] text-slate-500">Multivariate Logit</span>
+                  </div>
+                  <div className="text-[10px] font-mono space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Home:</span>
+                      <span className="text-emerald-400 font-bold">{prediction.individualModels.ml.home}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Draw:</span>
+                      <span className="text-slate-300 font-bold">{prediction.individualModels.ml.draw}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-rose-400 font-bold">{prediction.individualModels.ml.away}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form */}
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/60 flex flex-col justify-between">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
+                    <span className="text-[11px] font-bold text-slate-300">4. Form/Streak (10%)</span>
+                    <span className="text-[9px] text-slate-500">Momentum</span>
+                  </div>
+                  <div className="text-[10px] font-mono space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Home:</span>
+                      <span className="text-emerald-400 font-bold">{prediction.individualModels.form.home}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Draw:</span>
+                      <span className="text-slate-300 font-bold">{prediction.individualModels.form.draw}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Away:</span>
+                      <span className="text-rose-400 font-bold">{prediction.individualModels.form.away}%</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </section>
+
+          {/* COLUMN 3: FAR RIGHT GEMINI KEY CONTROL HUB & AI ANALYST (lg:col-span-3) */}
+          <section className="lg:col-span-3 space-y-6">
+            
+            {/* GEMINI API CONTROL CENTER */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-12 w-12 bg-emerald-500/5 rounded-full blur-xl pointer-events-none"></div>
+              
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-xs tracking-wider uppercase text-emerald-400 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5" /> Gemini API Gateway
+                </h3>
+                <span className={`h-2 w-2 rounded-full ${geminiApiKey ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} title={geminiApiKey ? 'API Key Active' : 'Simulated Offline Mode'}></span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-[11px] text-slate-400">
+                  Enter your Google Gemini API Key below to replace simulated queries with real model completions:
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={isKeyVisible ? "text" : "password"}
+                    value={geminiApiKey}
+                    onChange={(e) => handleSaveApiKey(e.target.value)}
+                    placeholder="AI_zaSy..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-3 pr-10 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setIsKeyVisible(!isKeyVisible)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 text-[10px] font-semibold"
+                  >
+                    {isKeyVisible ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {geminiApiKey && (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <button 
+                    onClick={handleTestApiKey}
+                    disabled={testStatus === 'testing'}
+                    className="flex-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[10px] py-1.5 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    {testStatus === 'testing' ? 'Verifying...' : 'Test Connection'}
+                  </button>
+                  {testStatus === 'success' && (
+                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Ready
+                    </span>
+                  )}
+                  {testStatus === 'failed' && (
+                    <span className="text-[10px] text-rose-400 font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Error
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {apiErrorMessage && (
+                <div className="text-[10px] bg-rose-950/40 text-rose-300 p-2 rounded-lg border border-rose-900/40">
+                  {apiErrorMessage}
+                </div>
+              )}
+
+              <div className="text-[10px] text-slate-500 flex items-center gap-1 leading-tight">
+                <Info className="w-3 h-3 shrink-0" />
+                <span>Your keys are kept completely local inside your secure browser.</span>
+              </div>
+            </div>
+
+            {/* AI ANALYST COMPANION (CHAT WINDOW) */}
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg flex flex-col overflow-hidden h-[420px]">
+              
+              {/* Chat Header */}
+              <div className="bg-slate-850 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-emerald-500 text-slate-950 p-1 rounded-lg">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-200">AI Assistant Analyst</h4>
+                    <p className="text-[9px] text-emerald-400 font-semibold flex items-center gap-0.5">
+                      <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>{geminiApiKey ? 'Live v2.5-Flash' : 'Offline Simulator'}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-3.5 space-y-3 scrollbar-thin scrollbar-thumb-slate-850">
+                {chatMessages.map((msg, i) => (
+                  <div 
+                    key={i} 
+                    className={`flex flex-col max-w-[90%] ${msg.sender === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'}`}
+                  >
+                    <div className={`p-2.5 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
+                      msg.sender === 'user' 
+                        ? 'bg-emerald-500 text-slate-950 font-medium rounded-tr-none' 
+                        : 'bg-slate-950 text-slate-200 border border-slate-850 rounded-tl-none'
+                    }`}>
+                      {msg.text}
+                    </div>
+                    <span className="text-[8px] text-slate-500 mt-0.5 px-1 font-mono">
+                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                
+                {isAiLoading && (
+                  <div className="mr-auto flex items-center gap-1.5 bg-slate-950 p-2.5 rounded-xl rounded-tl-none border border-slate-850 text-xs text-slate-400">
+                    <span className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]"></span>
+                    </span>
+                  </div>
+                )}
+                
+                <div ref={chatBottomRef} />
+              </div>
+
+              {/* Chat Form */}
+              <form onSubmit={handleSendMessage} className="p-2 border-t border-slate-800 bg-slate-950 flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask why a team is favored..."
+                  className="flex-1 bg-slate-900 text-xs border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 p-2 rounded-xl flex items-center justify-center transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </form>
+
+            </div>
+
+          </section>
+
+        </div>
+
+      </main>
+
+      {/* FOOTER */}
+      <footer className="border-t border-slate-800/60 mt-12 py-6 bg-slate-950">
+        <div className="max-w-[1600px] mx-auto px-4 text-center space-y-2 text-xs text-slate-500 sm:px-6 lg:px-8">
+          <p>© 2026 Football Win Predictor Pro. Powered by Poisson distributions, Chess-style Elo, and Machine Learning models.</p>
+          <p className="text-[11px] text-slate-600">Disclaimer: Calculations provided are statistical estimates intended for analysis purposes. Always practice responsible management of predictive data models.</p>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
